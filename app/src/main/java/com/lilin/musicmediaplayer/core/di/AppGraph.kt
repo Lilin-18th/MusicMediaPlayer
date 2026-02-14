@@ -20,4 +20,9 @@ interface AppGraph : MetroAppComponentProviders, ViewModelGraph {
     @Provides
     fun provideContentResolver(application: Application): ContentResolver =
         application.contentResolver
+
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(@Provides application: Application): AppGraph
+    }
 }
