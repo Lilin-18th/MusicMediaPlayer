@@ -16,6 +16,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicMediaPlayer">
 
+        <service
+            android:name=".core.service.MusicMediaSessionService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
