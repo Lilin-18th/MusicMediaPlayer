@@ -27,6 +27,7 @@ class MusicPlayViewModel(
                 MusicPlayUiState(
                     isPlaying = playerState.isPlaying,
                     currentPosition = playerState.currentPosition,
+                    currentMusic = playerState.currentMusic ?: music,
                     duration = playerState.duration,
                     isBuffering = playerState.isBuffering,
                     error = playerState.error,
@@ -35,7 +36,7 @@ class MusicPlayViewModel(
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = MusicPlayUiState(),
+                initialValue = MusicPlayUiState(currentMusic = music),
             )
 
     init {

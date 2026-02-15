@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -55,7 +56,6 @@ fun MusicPlayScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     MusicPlayScreen(
-        music = navKey.music,
         uiState = uiState,
         onBackClick = onBackClick,
         onClickPlayPause = viewModel::togglePlayPause,
@@ -70,7 +70,6 @@ fun MusicPlayScreen(
 
 @Composable
 private fun MusicPlayScreen(
-    music: Music,
     uiState: MusicPlayUiState,
     onBackClick: () -> Unit,
     onClickPlayPause: () -> Unit,
@@ -102,11 +101,15 @@ private fun MusicPlayScreen(
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val artworkUri = "content://media/external/audio/albumart".toUri()
-            val albumArtUri = ContentUris.withAppendedId(artworkUri, music.albumId)
+            val albumArtUri = remember(uiState.currentMusic.albumId) {
+                ContentUris.withAppendedId(
+                    "content://media/external/audio/albumart".toUri(),
+                    uiState.currentMusic.albumId,
+                )
+            }
 
             MusicPlayTopAppBar(
-                title = music.title,
+                title = uiState.currentMusic.title,
                 onBackClick = onBackClick,
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -117,8 +120,8 @@ private fun MusicPlayScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             PlayerMusicInfo(
-                title = music.title,
-                artist = music.artist,
+                title = uiState.currentMusic.title,
+                artist = uiState.currentMusic.artist,
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .fillMaxWidth(),
@@ -181,16 +184,17 @@ private fun PlayerGlowEffects() {
 @Preview(showSystemUi = true)
 @Composable
 private fun MusicPlayScreenPreview() {
+    val music = Music(
+        id = 1,
+        title = "Midnight Serenade",
+        artist = "Luna Orchestra",
+        albumId = 1,
+        duration = 208000,
+        uri = "",
+    )
+
     MusicPlayScreen(
-        music = Music(
-            id = 1,
-            title = "Music Title",
-            artist = "Artist Name",
-            albumId = 1,
-            duration = 60000,
-            uri = "",
-        ),
-        uiState = MusicPlayUiState(),
+        uiState = MusicPlayUiState(currentMusic = music),
         onBackClick = {},
         onClickPlayPause = {},
         onClickSkipToPrevious = {},

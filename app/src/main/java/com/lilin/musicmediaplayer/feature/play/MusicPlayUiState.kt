@@ -1,8 +1,11 @@
 package com.lilin.musicmediaplayer.feature.play
 
+import com.lilin.musicmediaplayer.domain.model.Music
+
 data class MusicPlayUiState(
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0L,
+    val currentMusic: Music,
     val duration: Long = 0L,
     val isBuffering: Boolean = false,
     val error: String? = null,
