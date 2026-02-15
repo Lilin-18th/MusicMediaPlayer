@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -50,6 +49,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.lilin.musicmediaplayer.domain.model.Music
 import com.lilin.musicmediaplayer.feature.play.MusicPlayScreen
 import com.lilin.musicmediaplayer.feature.play.miniplayer.MiniPlayer
+import com.lilin.musicmediaplayer.feature.play.miniplayer.MiniPlayerUiState
 import com.lilin.musicmediaplayer.feature.play.miniplayer.MiniPlayerViewModel
 import com.lilin.musicmediaplayer.ui.component.MusicCardItem
 import com.lilin.musicmediaplayer.ui.component.TopAppBar
@@ -76,44 +76,17 @@ fun MusicPlayListScreen(
     viewModel: MusicPlayListViewModel = metroViewModel(),
     miniPlayerViewModel: MiniPlayerViewModel = metroViewModel(),
 ) {
+    // ViewModels
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val miniPlayerState by miniPlayerViewModel.miniPlayerUiState.collectAsStateWithLifecycle()
-
     val playerId by viewModel.currentPlayingMusicId.collectAsStateWithLifecycle()
-
+    // Permissions
     val storagePermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(permission = Manifest.permission.READ_MEDIA_AUDIO)
     } else {
         rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-
-    val bottomSheetState = rememberStandardBottomSheetState(
-        initialValue = SheetValue.PartiallyExpanded,
-        skipHiddenState = true,
-    )
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = bottomSheetState,
-    )
-
-    val navBarPadding = WindowInsets.navigationBars
-        .asPaddingValues()
-        .calculateBottomPadding()
-    val peekHeight = remember(navBarPadding) {
-        navBarPadding + PlayerConfig.MINI_PLAYER_HEIGHT
-    }
-    val scope = rememberCoroutineScope()
-
-    val isExpanded by remember {
-        derivedStateOf {
-            when {
-                bottomSheetState.targetValue == SheetValue.Expanded -> true
-                bottomSheetState.currentValue == SheetValue.Expanded &&
-                    bottomSheetState.targetValue == SheetValue.PartiallyExpanded -> false
-                else -> false
-            }
-        }
-    }
-
+    // Permissions Side Effects
     LaunchedEffect(storagePermissionState.status) {
         when {
             storagePermissionState.status.isGranted -> {
@@ -130,13 +103,68 @@ fun MusicPlayListScreen(
         }
     }
 
+    MusicPlayListScreen(
+        modifier = modifier,
+        playerId = playerId,
+        uiState = uiState,
+        miniPlayerState = miniPlayerState,
+        onMusicClick = { music ->
+            val index = uiState.musicList.indexOf(music)
+            if (index >= 0) {
+                viewModel.selectMusic(index)
+            }
+        },
+        onTogglePlayPause = miniPlayerViewModel::toggleMiniPlayerPause,
+        onSkipToNext = miniPlayerViewModel::miniPlayerSkipToNext,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MusicPlayListScreen(
+    modifier: Modifier = Modifier,
+    playerId: Long?,
+    uiState: PlayListUiState,
+    miniPlayerState: MiniPlayerUiState,
+    onMusicClick: (Music) -> Unit,
+    onTogglePlayPause: () -> Unit,
+    onSkipToNext: () -> Unit,
+) {
+    // BottomSheet UI States
+    val bottomSheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.PartiallyExpanded,
+        skipHiddenState = true,
+    )
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = bottomSheetState,
+    )
+    val scope = rememberCoroutineScope()
+    // BottomSheet UI Calculations
+    val navBarPadding = WindowInsets.navigationBars
+        .asPaddingValues()
+        .calculateBottomPadding()
+    val peekHeight = remember(navBarPadding) {
+        navBarPadding + PlayerConfig.MINI_PLAYER_HEIGHT
+    }
+    // BottomSheet Derived States
+    val isExpanded by remember {
+        derivedStateOf {
+            when {
+                bottomSheetState.targetValue == SheetValue.Expanded -> true
+                bottomSheetState.currentValue == SheetValue.Expanded &&
+                    bottomSheetState.targetValue == SheetValue.PartiallyExpanded -> false
+
+                else -> false
+            }
+        }
+    }
     val hasCurrentMusic = miniPlayerState.currentMusic != null
 
     BottomSheetScaffold(
         sheetContent = {
             Box(
                 modifier = Modifier
-                    .fillMaxHeight()
+                    .fillMaxHeight(),
             ) {
                 if (isExpanded && hasCurrentMusic) {
                     MusicPlayScreen(
@@ -153,8 +181,8 @@ fun MusicPlayListScreen(
                         modifier = Modifier
                             .navigationBarsPadding()
                             .fillMaxHeight(),
-                        onTogglePlayPause = miniPlayerViewModel::toggleMiniPlayerPause,
-                        onSkipToNext = miniPlayerViewModel::miniPlayerSkipToNext,
+                        onTogglePlayPause = onTogglePlayPause,
+                        onSkipToNext = onSkipToNext,
                         onClick = {
                             scope.launch { bottomSheetState.expand() }
                         },
@@ -170,75 +198,57 @@ fun MusicPlayListScreen(
         sheetDragHandle = null,
         sheetSwipeEnabled = hasCurrentMusic,
     ) {
-        MusicPlayListScreen(
-            modifier = Modifier,
-            playerId = playerId,
-            uiState = uiState,
-            onMusicClick = { music ->
-                val index = uiState.musicList.indexOf(music)
-                if (index >= 0) {
-                    viewModel.selectMusic(index)
-                }
-                scope.launch {
-                    scaffoldState.bottomSheetState.expand()
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun MusicPlayListScreen(
-    modifier: Modifier = Modifier,
-    playerId: Long?,
-    uiState: PlayListUiState,
-    onMusicClick: (Music) -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        PlayerBackgroundTop,
-                        PlayerBackgroundMiddle,
-                        PlayerBackgroundBottom,
+        Box(
+            modifier = Modifier
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            PlayerBackgroundTop,
+                            PlayerBackgroundMiddle,
+                            PlayerBackgroundBottom,
+                        ),
                     ),
                 ),
-            ),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
         ) {
-            when {
-                uiState.isLoading -> {
-                    LoadingView(
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding(),
+            ) {
+                when {
+                    uiState.isLoading -> {
+                        LoadingView(
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
 
-                uiState.errorMessage != null -> {
-                    ErrorView(
-                        errorMessage = uiState.errorMessage,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                    uiState.errorMessage != null -> {
+                        ErrorView(
+                            errorMessage = uiState.errorMessage,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
 
-                uiState.musicList.isEmpty() -> {
-                    EmptyView(
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                    uiState.musicList.isEmpty() -> {
+                        EmptyView(
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
 
-                else -> {
-                    MusicList(
-                        playerId = playerId,
-                        modifier = Modifier.weight(1f),
-                        musicList = uiState.musicList,
-                        onMusicClick = onMusicClick,
-                    )
+                    else -> {
+                        MusicList(
+                            playerId = playerId,
+                            modifier = Modifier.weight(1f),
+                            musicList = uiState.musicList,
+                            onMusicClick = {
+                                onMusicClick(it)
+                                scope.launch {
+                                    scaffoldState.bottomSheetState.expand()
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -358,7 +368,102 @@ private fun MusicPlayListScreenEmptyViewPreview() {
             isLoading = false,
             errorMessage = null,
         ),
+        miniPlayerState = MiniPlayerUiState(),
         onMusicClick = {},
+        onTogglePlayPause = {},
+        onSkipToNext = {},
+    )
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun MusicPlayListScreenViewPreview() {
+    val musicList = listOf(
+        Music(
+            id = 1,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 208000,
+            uri = "",
+        ),
+        Music(
+            id = 2,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 308000,
+            uri = "",
+        ),
+        Music(
+            id = 3,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 408000,
+            uri = "",
+        ),
+    )
+
+    MusicPlayListScreen(
+        playerId = null,
+        uiState = PlayListUiState(
+            musicList = musicList,
+            isLoading = false,
+            errorMessage = null,
+        ),
+        miniPlayerState = MiniPlayerUiState(),
+        onMusicClick = {},
+        onTogglePlayPause = {},
+        onSkipToNext = {},
+    )
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun MusicPlayListScreenMiniPlayerViewPreview() {
+    val musicList = listOf(
+        Music(
+            id = 1,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 208000,
+            uri = "",
+        ),
+        Music(
+            id = 2,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 308000,
+            uri = "",
+        ),
+        Music(
+            id = 3,
+            title = "Midnight Serenade",
+            artist = "Luna Orchestra",
+            albumId = 1,
+            duration = 408000,
+            uri = "",
+        ),
+    )
+
+    MusicPlayListScreen(
+        playerId = null,
+        uiState = PlayListUiState(
+            musicList = musicList,
+            isLoading = false,
+            errorMessage = null,
+        ),
+        miniPlayerState = MiniPlayerUiState(
+            currentMusic = musicList[0],
+            isPlaying = true,
+            progress = 0.7f,
+        ),
+        onMusicClick = {},
+        onTogglePlayPause = {},
+        onSkipToNext = {},
     )
 }
 
@@ -369,10 +474,13 @@ private fun MusicPlayListScreenLoadingViewPreview() {
         playerId = null,
         uiState = PlayListUiState(
             musicList = emptyList(),
-            isLoading = true,
+            isLoading = false,
             errorMessage = null,
         ),
+        miniPlayerState = MiniPlayerUiState(),
         onMusicClick = {},
+        onTogglePlayPause = {},
+        onSkipToNext = {},
     )
 }
 
@@ -386,6 +494,9 @@ private fun MusicPlayListScreenErrorViewPreview() {
             isLoading = false,
             errorMessage = "Error message",
         ),
+        miniPlayerState = MiniPlayerUiState(),
         onMusicClick = {},
+        onTogglePlayPause = {},
+        onSkipToNext = {},
     )
 }
