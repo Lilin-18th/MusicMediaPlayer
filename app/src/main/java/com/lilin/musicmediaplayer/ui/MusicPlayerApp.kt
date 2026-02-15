@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.lilin.musicmediaplayer.feature.play.MusicPlayScreen
 import com.lilin.musicmediaplayer.feature.playlist.MusicPlayListScreen
 
 @Composable
@@ -18,7 +19,14 @@ fun MusicPlayerApp() {
             when (key) {
                 is MusicPlayListScreen -> NavEntry(key) {
                     MusicPlayListScreen(
-                        onMusicClick = { backStack.add(MusicPlayListScreen) },
+                        onMusicClick = { backStack.add(MusicPlayScreen(it)) },
+                    )
+                }
+
+                is MusicPlayScreen -> NavEntry(key) {
+                    MusicPlayScreen(
+                        navKey = key,
+                        onBackClick = { backStack.removeLastOrNull() },
                     )
                 }
 
