@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +29,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -47,6 +49,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.lilin.musicmediaplayer.domain.model.Music
 import com.lilin.musicmediaplayer.feature.play.MusicPlayScreen
+import com.lilin.musicmediaplayer.feature.play.miniplayer.MiniPlayer
+import com.lilin.musicmediaplayer.feature.play.miniplayer.MiniPlayerViewModel
 import com.lilin.musicmediaplayer.ui.component.MusicCardItem
 import com.lilin.musicmediaplayer.ui.component.TopAppBar
 import com.lilin.musicmediaplayer.ui.theme.PlayerAccent
@@ -70,8 +74,11 @@ internal object PlayerConfig {
 fun MusicPlayListScreen(
     modifier: Modifier = Modifier,
     viewModel: MusicPlayListViewModel = metroViewModel(),
+    miniPlayerViewModel: MiniPlayerViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val miniPlayerState by miniPlayerViewModel.miniPlayerUiState.collectAsStateWithLifecycle()
+
     val playerId by viewModel.currentPlayingMusicId.collectAsStateWithLifecycle()
 
     val storagePermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -96,6 +103,17 @@ fun MusicPlayListScreen(
     }
     val scope = rememberCoroutineScope()
 
+    val isExpanded by remember {
+        derivedStateOf {
+            when {
+                bottomSheetState.targetValue == SheetValue.Expanded -> true
+                bottomSheetState.currentValue == SheetValue.Expanded &&
+                    bottomSheetState.targetValue == SheetValue.PartiallyExpanded -> false
+                else -> false
+            }
+        }
+    }
+
     LaunchedEffect(storagePermissionState.status) {
         when {
             storagePermissionState.status.isGranted -> {
@@ -112,21 +130,48 @@ fun MusicPlayListScreen(
         }
     }
 
+    val hasCurrentMusic = miniPlayerState.currentMusic != null
+
     BottomSheetScaffold(
         sheetContent = {
-            MusicPlayScreen(
-                onBackClick = {},
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+            ) {
+                if (isExpanded && hasCurrentMusic) {
+                    MusicPlayScreen(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        onCollapseClick = {
+                            scope.launch { bottomSheetState.partialExpand() }
+                        },
+                    )
+                } else {
+                    MiniPlayer(
+                        state = miniPlayerState,
+                        albumArtModifier = Modifier,
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .fillMaxHeight(),
+                        onTogglePlayPause = miniPlayerViewModel::toggleMiniPlayerPause,
+                        onSkipToNext = miniPlayerViewModel::miniPlayerSkipToNext,
+                        onClick = {
+                            scope.launch { bottomSheetState.expand() }
+                        },
+                    )
+                }
+            }
         },
         modifier = modifier,
         scaffoldState = scaffoldState,
         sheetPeekHeight = peekHeight,
-        sheetShape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+        sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         sheetContainerColor = Color.Transparent,
-        sheetSwipeEnabled = true,
-    ) { innerPadding ->
+        sheetDragHandle = null,
+        sheetSwipeEnabled = hasCurrentMusic,
+    ) {
         MusicPlayListScreen(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier,
             playerId = playerId,
             uiState = uiState,
             onMusicClick = { music ->
@@ -266,13 +311,13 @@ private fun MusicList(
         TopAppBar(title = "Music Player")
 
         LazyColumn(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
                 top = 8.dp,
-                bottom = 8.dp,
+                bottom = 8.dp + PlayerConfig.MINI_PLAYER_HEIGHT,
             ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {

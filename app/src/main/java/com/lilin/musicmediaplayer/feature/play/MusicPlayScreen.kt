@@ -49,7 +49,7 @@ data class MusicPlayScreen(
 fun MusicPlayScreen(
     modifier: Modifier = Modifier,
     viewModel: MusicPlayViewModel = metroViewModel(),
-    onBackClick: () -> Unit,
+    onCollapseClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val state = uiState
@@ -61,7 +61,7 @@ fun MusicPlayScreen(
 
     MusicPlayScreen(
         uiState = state,
-        onBackClick = onBackClick,
+        onCollapseClick = onCollapseClick,
         onClickPlayPause = viewModel::togglePlayPause,
         onClickSkipToPrevious = viewModel::skipToPrevious,
         onClickSkipToNext = viewModel::skipToNext,
@@ -75,7 +75,7 @@ fun MusicPlayScreen(
 @Composable
 private fun MusicPlayScreen(
     uiState: MusicPlayUiState,
-    onBackClick: () -> Unit,
+    onCollapseClick: () -> Unit,
     onClickPlayPause: () -> Unit,
     onClickSkipToPrevious: () -> Unit,
     onClickSkipToNext: () -> Unit,
@@ -113,8 +113,7 @@ private fun MusicPlayScreen(
             }
 
             MusicPlayTopAppBar(
-                title = uiState.currentMusic.title,
-                onBackClick = onBackClick,
+                onCollapseClick = onCollapseClick,
             )
             Spacer(modifier = Modifier.weight(1f))
 
@@ -199,7 +198,7 @@ private fun MusicPlayScreenPreview() {
 
     MusicPlayScreen(
         uiState = MusicPlayUiState(currentMusic = music),
-        onBackClick = {},
+        onCollapseClick = {},
         onClickPlayPause = {},
         onClickSkipToPrevious = {},
         onClickSkipToNext = {},

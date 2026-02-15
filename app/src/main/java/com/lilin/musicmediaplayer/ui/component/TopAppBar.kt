@@ -1,11 +1,17 @@
 package com.lilin.musicmediaplayer.ui.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,41 +65,39 @@ fun TopAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicPlayTopAppBar(
-    title: String,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit,
+    onCollapseClick: () -> Unit,
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.MusicNote,
-                    contentDescription = null,
-                    modifier = Modifier.width(24.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = title,
-                    modifier = Modifier,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        modifier = modifier,
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        IconButton(onClick = onCollapseClick) {
+            Icon(
+                imageVector = Icons.Rounded.KeyboardArrowDown,
+                contentDescription = "折りたたむ",
+                tint = Color.White.copy(alpha = 0.7f),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .background(
+                    color = Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(20.dp),
+                ),
+        ) {
+            Text(
+                text = "Playing from Library",
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.6f),
+            )
+        }
+        Spacer(modifier = Modifier.size(48.dp))
+    }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF0A0612)
@@ -102,11 +106,10 @@ private fun TopAppBarPreview() {
     TopAppBar(title = "Music Player")
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0A0612)
 @Composable
 private fun MusicPlayTopAppBarPreview() {
     MusicPlayTopAppBar(
-        title = "Music Player",
-        onBackClick = {},
+        onCollapseClick = {},
     )
 }
