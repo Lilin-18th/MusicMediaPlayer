@@ -1,7 +1,7 @@
 package com.lilin.musicmediaplayer.data.mapper
 
-import com.lilin.musicmediaplayer.domain.model.Music
 import com.lilin.musicmediaplayer.data.entity.MusicEntity
+import com.lilin.musicmediaplayer.domain.model.Music
 
 fun MusicEntity.toDomain(): Music {
     return Music(

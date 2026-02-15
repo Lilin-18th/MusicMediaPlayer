@@ -1,9 +1,9 @@
 package com.lilin.musicmediaplayer.data.repository
 
 import com.lilin.musicmediaplayer.data.datasource.MusicDataSource
+import com.lilin.musicmediaplayer.data.mapper.toDomain
 import com.lilin.musicmediaplayer.domain.model.Music
 import com.lilin.musicmediaplayer.domain.repository.MusicRepository
-import com.lilin.musicmediaplayer.data.mapper.toDomain
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
