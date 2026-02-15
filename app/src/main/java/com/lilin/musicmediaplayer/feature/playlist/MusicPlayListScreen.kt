@@ -56,6 +56,7 @@ fun MusicPlayListScreen(
     onMusicClick: (Music) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val playerId by viewModel.currentPlayingMusicId.collectAsStateWithLifecycle()
 
     val storagePermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(permission = Manifest.permission.READ_MEDIA_AUDIO)
@@ -81,9 +82,14 @@ fun MusicPlayListScreen(
 
     MusicPlayListScreen(
         modifier = modifier,
+        playerId = playerId,
         uiState = uiState,
         onMusicClick = { music ->
-            // todo: onMusicClick(music)
+            val index = uiState.musicList.indexOf(music)
+            if (index >= 0) {
+                viewModel.selectMusic(index)
+            }
+            onMusicClick(music)
         },
     )
 }
@@ -91,6 +97,7 @@ fun MusicPlayListScreen(
 @Composable
 private fun MusicPlayListScreen(
     modifier: Modifier = Modifier,
+    playerId: Long?,
     uiState: PlayListUiState,
     onMusicClick: (Music) -> Unit,
 ) {
@@ -134,6 +141,7 @@ private fun MusicPlayListScreen(
 
                 else -> {
                     MusicList(
+                        playerId = playerId,
                         modifier = Modifier.weight(1f),
                         musicList = uiState.musicList,
                         onMusicClick = onMusicClick,
@@ -196,6 +204,7 @@ private fun ErrorView(
 
 @Composable
 private fun MusicList(
+    playerId: Long?,
     musicList: List<Music>,
     modifier: Modifier = Modifier,
     onMusicClick: (Music) -> Unit,
@@ -223,7 +232,7 @@ private fun MusicList(
                 items = musicList,
                 key = { it.id },
             ) { music ->
-                val isPlaying = true
+                val isPlaying = playerId == music.id
                 val albumArtUri = remember(music.albumId) {
                     ContentUris.withAppendedId(
                         "content://media/external/audio/albumart".toUri(),
@@ -250,6 +259,7 @@ private fun MusicList(
 @Composable
 private fun MusicPlayListScreenEmptyViewPreview() {
     MusicPlayListScreen(
+        playerId = null,
         uiState = PlayListUiState(
             musicList = emptyList(),
             isLoading = false,
@@ -263,6 +273,7 @@ private fun MusicPlayListScreenEmptyViewPreview() {
 @Composable
 private fun MusicPlayListScreenLoadingViewPreview() {
     MusicPlayListScreen(
+        playerId = null,
         uiState = PlayListUiState(
             musicList = emptyList(),
             isLoading = true,
@@ -276,6 +287,7 @@ private fun MusicPlayListScreenLoadingViewPreview() {
 @Composable
 private fun MusicPlayListScreenErrorViewPreview() {
     MusicPlayListScreen(
+        playerId = null,
         uiState = PlayListUiState(
             musicList = emptyList(),
             isLoading = false,
