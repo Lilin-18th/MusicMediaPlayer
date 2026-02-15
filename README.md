@@ -1,6 +1,8 @@
 # MusicMediaPlayer
 音楽再生アプリ
 
+![Version](https://img.shields.io/badge/Version-0.1.0-blue)
+
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-7F52FF?logo=kotlin&logoColor=white) 
 ![Jetpack Compose](https://img.shields.io/badge/UI-Compose%20M3-4285F4?logo=jetpackcompose&logoColor=white) 
 [![Metro](https://img.shields.io/badge/DI-Metro-orange?logoColor=white)](https://zacsweers.github.io/metro/latest/)
