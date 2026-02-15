@@ -2,46 +2,45 @@ package com.lilin.musicmediaplayer.feature.play
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lilin.musicmediaplayer.domain.model.Music
 import com.lilin.musicmediaplayer.domain.repository.MusicPlayerRepository
 import dev.zacsweers.metro.AppScope
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
-import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-@AssistedInject
+@ContributesIntoMap(AppScope::class)
+@ViewModelKey(MusicPlayViewModel::class)
+@Inject
 class MusicPlayViewModel(
-    @Assisted private val music: Music,
     private val musicPlayerRepository: MusicPlayerRepository,
 ) : ViewModel() {
-    val uiState: StateFlow<MusicPlayUiState> =
+    val uiState: StateFlow<MusicPlayUiState?> =
         musicPlayerRepository.playerState
             .map { playerState ->
-                MusicPlayUiState(
-                    isPlaying = playerState.isPlaying,
-                    currentPosition = playerState.currentPosition,
-                    currentMusic = playerState.currentMusic ?: music,
-                    duration = playerState.duration,
-                    isBuffering = playerState.isBuffering,
-                    error = playerState.error,
-                )
+                playerState.currentMusic?.let { music ->
+                    MusicPlayUiState(
+                        isPlaying = playerState.isPlaying,
+                        currentPosition = playerState.currentPosition,
+                        currentMusic = music,
+                        duration = playerState.duration,
+                        isBuffering = playerState.isBuffering,
+                        error = playerState.error,
+                    )
+                }
             }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = MusicPlayUiState(currentMusic = music),
+                initialValue = null,
             )
 
-    init {
-        musicPlayerRepository.setMediaItem(music)
-    }
+//    init {
+//        musicPlayerRepository.setMediaItem(music)
+//    }
 
     private fun play() {
         musicPlayerRepository.play()
@@ -52,7 +51,8 @@ class MusicPlayViewModel(
     }
 
     fun togglePlayPause() {
-        if (uiState.value.isPlaying) {
+        val state = musicPlayerRepository.playerState.value
+        if (state.isPlaying) {
             pause()
         } else {
             play()
@@ -77,12 +77,5 @@ class MusicPlayViewModel(
 
     fun skipToNext() {
         musicPlayerRepository.skipToNext()
-    }
-
-    @AssistedFactory
-    @ManualViewModelAssistedFactoryKey(Factory::class)
-    @ContributesIntoMap(AppScope::class)
-    fun interface Factory : ManualViewModelAssistedFactory {
-        fun create(music: Music): MusicPlayViewModel
     }
 }

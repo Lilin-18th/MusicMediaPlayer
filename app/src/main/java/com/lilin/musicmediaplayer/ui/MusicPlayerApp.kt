@@ -18,16 +18,14 @@ fun MusicPlayerApp() {
         entryProvider = { key ->
             when (key) {
                 is MusicPlayListScreen -> NavEntry(key) {
-                    MusicPlayListScreen(
-                        onMusicClick = { backStack.add(MusicPlayScreen(it)) },
-                    )
+                    MusicPlayListScreen()
                 }
 
                 is MusicPlayScreen -> NavEntry(key) {
-                    MusicPlayScreen(
-                        navKey = key,
-                        onBackClick = { backStack.removeLastOrNull() },
-                    )
+//                    MusicPlayScreen(
+//                        navKey = key,
+//                        onBackClick = { backStack.removeLastOrNull() },
+//                    )
                 }
 
                 else -> NavEntry(key) {

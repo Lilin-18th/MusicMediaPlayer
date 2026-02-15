@@ -37,7 +37,7 @@ import com.lilin.musicmediaplayer.ui.theme.PlayerBackgroundMiddle
 import com.lilin.musicmediaplayer.ui.theme.PlayerBackgroundTop
 import com.lilin.musicmediaplayer.ui.theme.PlayerGlowBlue
 import com.lilin.musicmediaplayer.ui.theme.PlayerGlowPurple
-import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -47,16 +47,20 @@ data class MusicPlayScreen(
 
 @Composable
 fun MusicPlayScreen(
-    navKey: MusicPlayScreen,
-    viewModel: MusicPlayViewModel = assistedMetroViewModel<MusicPlayViewModel, MusicPlayViewModel.Factory> {
-        create(navKey.music)
-    },
+    modifier: Modifier = Modifier,
+    viewModel: MusicPlayViewModel = metroViewModel(),
     onBackClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state = uiState
+    if (state == null) {
+        // 再生中の曲がない場合は空のBoxを返す
+        Box(modifier = modifier)
+        return
+    }
 
     MusicPlayScreen(
-        uiState = uiState,
+        uiState = state,
         onBackClick = onBackClick,
         onClickPlayPause = viewModel::togglePlayPause,
         onClickSkipToPrevious = viewModel::skipToPrevious,
