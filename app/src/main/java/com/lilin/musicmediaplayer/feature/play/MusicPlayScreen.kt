@@ -37,7 +37,7 @@ import com.lilin.musicmediaplayer.ui.theme.PlayerBackgroundMiddle
 import com.lilin.musicmediaplayer.ui.theme.PlayerBackgroundTop
 import com.lilin.musicmediaplayer.ui.theme.PlayerGlowBlue
 import com.lilin.musicmediaplayer.ui.theme.PlayerGlowPurple
-import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -47,17 +47,21 @@ data class MusicPlayScreen(
 
 @Composable
 fun MusicPlayScreen(
-    navKey: MusicPlayScreen,
-    viewModel: MusicPlayViewModel = assistedMetroViewModel<MusicPlayViewModel, MusicPlayViewModel.Factory> {
-        create(navKey.music)
-    },
-    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: MusicPlayViewModel = metroViewModel(),
+    onCollapseClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state = uiState
+    if (state == null) {
+        // 再生中の曲がない場合は空のBoxを返す
+        Box(modifier = modifier)
+        return
+    }
 
     MusicPlayScreen(
-        uiState = uiState,
-        onBackClick = onBackClick,
+        uiState = state,
+        onCollapseClick = onCollapseClick,
         onClickPlayPause = viewModel::togglePlayPause,
         onClickSkipToPrevious = viewModel::skipToPrevious,
         onClickSkipToNext = viewModel::skipToNext,
@@ -71,7 +75,7 @@ fun MusicPlayScreen(
 @Composable
 private fun MusicPlayScreen(
     uiState: MusicPlayUiState,
-    onBackClick: () -> Unit,
+    onCollapseClick: () -> Unit,
     onClickPlayPause: () -> Unit,
     onClickSkipToPrevious: () -> Unit,
     onClickSkipToNext: () -> Unit,
@@ -109,8 +113,7 @@ private fun MusicPlayScreen(
             }
 
             MusicPlayTopAppBar(
-                title = uiState.currentMusic.title,
-                onBackClick = onBackClick,
+                onCollapseClick = onCollapseClick,
             )
             Spacer(modifier = Modifier.weight(1f))
 
@@ -195,7 +198,7 @@ private fun MusicPlayScreenPreview() {
 
     MusicPlayScreen(
         uiState = MusicPlayUiState(currentMusic = music),
-        onBackClick = {},
+        onCollapseClick = {},
         onClickPlayPause = {},
         onClickSkipToPrevious = {},
         onClickSkipToNext = {},
