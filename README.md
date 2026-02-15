@@ -12,6 +12,13 @@ Clean Architecture + MVVM
 GameLibraryはClean ArchitectureとMVVM（Model-View-ViewModel）パターンを組み合わせた設計を採用している。
 Data、Domain、UIの3層に明確に分離することで、テスタビリティ、保守性、スケーラビリティを実現。
 
+## Preview
+アプリの動作デモを表示
+
+|preview|対応中のmini player|
+|---|---|
+|<video width=240 src="https://github.com/user-attachments/assets/29f40a77-19f3-4875-a144-960c7872fe8c">|<video width=240 src="https://github.com/user-attachments/assets/0797286c-a823-4e1e-b63e-b390eb4fd27e">|
+
 
 ## 📁 Project Structure
 本プロジェクトは、関心の分離と高い保守性を実現するため、以下のパッケージ構造を採用している
